@@ -40,6 +40,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -208,22 +209,40 @@ public class CustomModule extends AModuleData {
     }
 
     private static final int MAX_RESPONSE = 256 * 1024;
+    private static final int MAX_REQUEST_BODY = 64 * 1024;
+    private static final Set<String> ALLOWED_METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE", "HEAD");
 
     /** Performs an http request (blocking, don't call from the main thread) */
     static Response request(String url, String method, Map<String, String> headers, String body) {
         HttpURLConnection connection = null;
         try {
-            connection = (HttpURLConnection) new URL(url).openConnection();
+            var parsedUrl = new URL(url);
+            var protocol = parsedUrl.getProtocol().toLowerCase(Locale.ROOT);
+            if (!"http".equals(protocol) && !"https".equals(protocol)) {
+                return new Response(-1, null, "Unsupported URL scheme: " + protocol);
+            }
+            if (method == null || !ALLOWED_METHODS.contains(method)) {
+                return new Response(-1, null, "Unsupported HTTP method: " + method);
+            }
+            byte[] bodyBytes = null;
+            if (body != null) {
+                bodyBytes = body.getBytes(StandardCharsets.UTF_8);
+                if (bodyBytes.length > MAX_REQUEST_BODY) {
+                    return new Response(-1, null, "Request body exceeds " + MAX_REQUEST_BODY + " bytes");
+                }
+            }
+            connection = (HttpURLConnection) parsedUrl.openConnection();
+            connection.setInstanceFollowRedirects(false);
             connection.setConnectTimeout(5000);
             connection.setReadTimeout(15000);
             connection.setRequestMethod(method);
             for (var header : headers.entrySet()) {
                 connection.setRequestProperty(header.getKey(), header.getValue());
             }
-            if (body != null) {
+            if (bodyBytes != null) {
                 connection.setDoOutput(true);
                 try (OutputStream out = connection.getOutputStream()) {
-                    out.write(body.getBytes(StandardCharsets.UTF_8));
+                    out.write(bodyBytes);
                 }
             }
             var code = connection.getResponseCode();
@@ -242,7 +261,7 @@ public class CustomModule extends AModuleData {
             var out = new ByteArrayOutputStream();
             var buffer = new byte[8192];
             int read;
-            while ((read = stream.read(buffer)) != -1 && out.size() < MAX_RESPONSE) {
+            while (out.size() < MAX_RESPONSE && (read = stream.read(buffer, 0, Math.min(buffer.length, MAX_RESPONSE - out.size()))) != -1) {
                 out.write(buffer, 0, read);
             }
             return out.toString("UTF-8");
