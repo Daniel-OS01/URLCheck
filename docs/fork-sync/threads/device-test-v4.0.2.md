@@ -84,9 +84,14 @@ With `medium.com`, `*.wikipedia.org` and `www.reddit.com` selected in "Open by d
 
 Approving hosts changes nothing for the observed cases, and adding more hosts to the filter would not either: the Google app's decisive intent is package-targeted (Chrome), and its first attempt (`REQUIRE_NON_BROWSER`) is rejected for URLCheck even on approved hosts. Likely reason (not proven): Android keeps only the first matching filter per activity, and for `MainDialog` that is the generic http/https filter, which marks the activity as a browser. A host-only filter in a **separate** activity (alias) would be classified as a non-browser; whether that makes the Google app hand an approved host to URLCheck has not been tested.
 
-## Open items
+## Not done (left open on purpose)
 
-- Google app setting "Open web pages in the Google app" (Settings > General): not read yet on either phone. poco-x8 is in use by the user, so no input was sent to it.
-- Evaluation of a host-only `activity-alias` (non-browser) so that `REQUIRE_NON_BROWSER` callers can reach URLCheck for approved hosts, using a CI evaluation APK.
-- Test 7 with a neutral source (Settings legal link, a note created and deleted by the test).
-- Revert the poco-f5 changes listed above when the phone is no longer needed.
+- Google app setting "Open web pages in the Google app" (Settings > General) was not read on either phone. If turning it off makes the app use the default browser, that is the one setting-level way to get Google app links into URLCheck. It is a setting in another app, so it is left to the user.
+- The host-only `activity-alias` (non-browser) idea was not built or tested; it could only help approved hosts, because the Google app falls back to Chrome by package for everything else.
+- Test 7 was not done with a neutral source on the daily phone; the daily phone was in use.
+- poco-f5 still carries the changes listed above. Revert them with the commands in that table when the phone is no longer needed.
+- No release was tagged and no code was changed by this test.
+
+## Guard against pushing to upstream
+
+A docs PR was opened against `TrianguloY/URLCheck` by mistake (the PR tool defaulted to the upstream remote) and closed within minutes. In the shared checkout the `upstream` push URL is now set to an invalid value and `gh repo set-default` points at `Daniel-OS01/URLCheck`. Always pass the repository explicitly when opening PRs.
