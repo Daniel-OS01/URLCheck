@@ -9,5 +9,6 @@ One file per work thread. Each file must contain: purpose and scope, what was ex
 | [fork-scanner.md](fork-scanner.md) | Second, deeper fork scan | done |
 | [settings-backup-updater.md](settings-backup-updater.md) | Update the settings backup to the 4.0.0 format (general findings only; the backup itself stays local) | done |
 | [link-interception-findings.md](link-interception-findings.md) | Link interception research (from any thread) | done |
+| [patterns-automations.md](patterns-automations.md) | Improve and extend custom patterns & automations for v4.0.2 (inventory, Java 17 tests, wiki gaps) | done |
 
 (Rows say "pending report", with the file name unlinked, until the thread adds its file; turn the name into a link in the same PR.)
